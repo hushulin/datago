@@ -1,0 +1,133 @@
+{{define "MarkdownDropdown"}}
+<input type="text" style="width: 300px;" autocomplete="off" placeholder="搜索" class="layui-input" id="ID-dropdown-demo-reloadData">
+<script src="//cdn.staticfile.org/layui/2.8.11/layui.js"></script>
+<script>
+  layui.use(function(){
+    var dropdown = layui.dropdown;
+    var $ = layui.$;
+    var getNewMdList = function () {
+      var list = [];
+      $.get("/markdown-new5", function (data) {
+        for (const dataKey in data) {
+
+          list[dataKey] = {
+            "id": data[dataKey]['ID'],
+            "title": data[dataKey]['title'] === "" ? "Untitled" : data[dataKey]['title'],
+            "href": '/markdown-page/'+data[dataKey]['ID']
+          }
+        }
+        list.push({
+            "id": 1001,
+            "title": "加载更多",
+        })
+          list.push({
+              "id": 1002,
+              "title": "回到首页",
+          })
+          list.push({
+              "id": 1003,
+              "title": "新建文档",
+          })
+      });
+      return list;
+    }
+
+    var GetLatestMDList = function () {
+        return new Promise(function (resolve, reject) {
+            $.get("/markdown-latest-100", function (data) {
+                var list = data.map(function (item) {
+                    var timestamp = new Date().getTime();
+
+// 生成一个随机数
+                    var random = Math.floor(Math.random() * 1000);
+
+// 将时间戳和随机数相加
+                    var result = timestamp +"."+ random;
+
+                    return {
+                        title: item.title === "" ? "Untitled" : item.title,
+                        id: item.ID,
+                        href: '/markdown-page/'+item.ID+"?ref=dropdown-"+result,
+                    };
+                });
+                resolve(list);
+            }).fail(function(error) {
+                reject(error);
+            });
+        });
+    };
+
+    var getMDListByKeyword = function (keyword) {
+      return new Promise(function(resolve, reject) {
+        $.get("/markdown-search/"+decodeURIComponent(keyword), function (data) {
+          var list = data.map(function (item) {
+            var timestamp = new Date().getTime();
+
+// 生成一个随机数
+            var random = Math.floor(Math.random() * 1000);
+
+// 将时间戳和随机数相加
+            var result = timestamp +"."+ random;
+
+            return {
+              title: item.title === "" ? "Untitled" : item.title,
+              id: item.ID,
+              href: '/markdown-page/'+item.ID+"?ref=dropdown-"+result,
+            };
+          });
+          resolve(list);
+        }).fail(function(error) {
+          reject(error);
+        });
+      });
+    };
+
+    var markdowns = getNewMdList();
+    // 渲染
+    var inst = dropdown.render({
+      elem: '#ID-dropdown-demo-reloadData',
+      data: markdowns,
+      style: 'max-height:800px; overflow-y:auto; min-width: 300px; box-shadow: 1px 1px 11px rgb(0 0 0 / 11%);',
+      click: function(data){
+          if(data.id === 1001){ // 菜单项对应设置的 id 值
+              // 重载方法
+              GetLatestMDList().then(function (res) {
+                  dropdown.reloadData(inst.config.id, {
+                      data: res, // 匹配到的新数据
+                  });
+              }).catch(function (error) {
+                  console.log(error)
+              })
+              return false; // 点击该选项，阻止面板关闭
+          }
+          if (data.id === 1002) {
+              window.location.href = '/';
+              return false;
+          }
+          if (data.id === 1003) {
+              window.location.href = '/markdown-page';
+              return false;
+          }
+        this.elem.val(data.title);
+      }
+    });
+    // 输入框输入事件
+    $(inst.config.elem).on('input propertychange', function(){
+      var elem = $(this);
+      var value = elem.val().trim();
+      // 匹配到对应内容时，重载数据
+      getMDListByKeyword(value).then(function (res) {
+        dropdown.reloadData(inst.config.id, {
+          data: res, // 匹配到的新数据
+        });
+      }).catch(function (error) {
+        console.log(error)
+      })
+      // console.log("dataNew", dataNew)
+      // dropdown.reloadData(inst.config.id, {
+      //     data: dataNew, // 匹配到的新数据
+      // });
+    });
+  });
+</script>
+{{end}}

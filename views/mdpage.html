@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Markdown Edit</title>
+      <meta name="renderer" content="webkit">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .container {
+            display: block;
+            width: 1142px;
+            margin: 0 auto;
+            padding-top: 40px;
+        }
+    </style>
+    <link href="//unpkg.com/layui@2.8.4/dist/css/layui.css" rel="stylesheet">
+    <script src="/js/stackedit.js"></script>
+</head>
+<body onload="openEdit()">
+<div class="container">
+    <form class="layui-form" action="/markdown-add" method="post">
+        <input type="hidden" name="_csrf" value="{{.csrfToken}}">
+        <div class="layui-form-item">
+            <label class="layui-form-label">标题</label>
+            <div class="layui-input-block">
+                <input type="text" name="title" lay-verify="" placeholder="" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">内容</label>
+            <div class="layui-input-block">
+                <textarea placeholder="" class="layui-textarea" style="min-height: 600px" name="content"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">处理图片</label>
+            <div class="layui-input-block">
+                {{ template "Attachment" }}
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn" lay-filter="dfsfsfdwew"><i class="layui-icon layui-icon-add-circle"></i></button>
+                <button type="reset" class="layui-btn layui-btn-primary"><i class="layui-icon layui-icon-backspace"></i></button>
+                <button type="button" class="layui-btn layui-btn-primary" onclick="openEdit()"><i class="layui-icon layui-icon-picture"></i></button>
+
+                <button type="button" class="layui-btn layui-btn-primary" onclick="javascript:window.location.href='/markdown-list';"><i class="layui-icon layui-icon-table"></i></button>
+                <div class="layui-input-inline" style="float: right;padding-right: 100px;">
+                    {{template "MarkdownDropdown" }}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    // Import the lib.
+    // import Stackedit from 'stackedit-js';
+
+    function openEdit() {
+        // Get the textarea.
+        const el = document.querySelector('textarea');
+
+        // Create the Stackedit object.
+        const stackedit = new Stackedit();
+
+        // Open the iframe
+        stackedit.openFile({
+            name: '', // with a filename
+            content: {
+                text: el.value // and the Markdown content.
+            }
+        });
+
+        // Listen to StackEdit events and apply the changes to the textarea.
+        stackedit.on('fileChange', (fileUploader) => {
+            el.value = fileUploader.content.text;
+        });
+    }
+
+</script>
+<!-- 请勿在项目正式环境中引用该 layui.js 地址 -->
+<script src="//cdn.staticfile.org/layui/2.8.11/layui.js"></script>
+<script>
+    layui.use(function(){
+        var $ = layui.$;
+        var form = layui.form;
+        var layer = layui.layer;
+        // 提交事件
+        form.on('submit(dfsfsfdwew)', function(data){
+            var field = data.field; // 获取表单全部字段值
+            var elem = data.elem; // 获取当前触发事件的元素 DOM 对象，一般为 button 标签
+            var elemForm = data.form; // 获取当前表单域的 form 元素对象，若容器为 form 标签才会返回。
+            // 显示填写结果，仅作演示用
+            // 此处可执行 Ajax 等操作
+            // …
+            $.post("/markdown-add", field, function (data) {
+                if (data.ID > 0) {
+                    // window.location.href = '/markdown-page/'+data.ID
+                }else {
+                    layer.alert('保存失败');
+                }
+            });
+            return false; // 阻止默认 form 跳转
+        });
+    });
+</script>
+</body>
+</html>
